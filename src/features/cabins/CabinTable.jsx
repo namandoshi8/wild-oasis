@@ -5,6 +5,7 @@ import CabinRow from "./CabinRow";
 import { useCabins } from "./useCabins";
 import Table from "../../ui/Table";
 import Menus from "../../ui/Menus";
+import { useSearchParams } from "react-router-dom";
 
 const TableHeader = styled.header`
   display: grid;
@@ -24,7 +25,48 @@ const TableHeader = styled.header`
 function CabinTable() {
   const { isLoading, cabins } = useCabins();
 
+  const [searchParams] = useSearchParams();
+
   if (isLoading) return <Spinner />;
+
+  //1) Filter
+  const filterValue = searchParams.get("discount") || "all";
+  console.log(filterValue);
+
+  let filteredCabins;
+  if (filterValue === "all") {
+    filteredCabins = cabins;
+  }
+  if (filterValue === "no-discount") {
+    filteredCabins = cabins.filter((cabin) => cabin.discount === 0);
+  }
+  if (filterValue === "with-discount") {
+    filteredCabins = cabins.filter((cabin) => cabin.discount > 0);
+  }
+
+  //2) Sort
+  const sortBy = searchParams.get("sortBy") || "name-asc";
+  const [field, direction] = sortBy.split("-");
+  const sortedCabins = filteredCabins.sort((a, b) => {
+    if (sortBy === "name-asc") {
+      return a.name.localeCompare(b.name);
+    }
+    if (sortBy === "name-desc") {
+      return b.name.localeCompare(a.name);
+    }
+    if (sortBy === "regularPrice-asc") {
+      return a.regularPrice - b.regularPrice;
+    }
+    if (sortBy === "regularPrice-desc") {
+      return b.regularPrice - a.regularPrice;
+    }
+    if (sortBy === "maxCapacity-asc") {
+      return a.maxCapacity - b.maxCapacity;
+    }
+    if (sortBy === "maxCapacity-desc") {
+      return b.maxCapacity - a.maxCapacity;
+    }
+  });
 
   return (
     <Menus>
@@ -39,7 +81,9 @@ function CabinTable() {
         </Table.Header>
 
         <Table.Body
-          data={cabins}
+          // data={cabins}
+          // data={filteredCabins}
+          data={sortedCabins}
           render={(cabin) => <CabinRow cabin={cabin} key={cabin.id} />}
         />
       </Table>
